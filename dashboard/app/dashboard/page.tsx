@@ -31,6 +31,8 @@ import {
   DashboardStats,
   MapMarker,
 } from "@/lib/types/database";
+import { StreamProvider } from "@/components/livekit/stream-provider";
+import { OfficerStreamDisplay } from "@/components/livekit/officer-stream-display";
 
 export default function Dashboard() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -351,6 +353,13 @@ export default function Dashboard() {
             />
           </CardContent>
         </Card>
+
+        {/* Live Officer Streams */}
+        <div className="mb-8">
+          <StreamProvider roomName="officer-stream-room">
+            <OfficerStreamDisplay />
+          </StreamProvider>
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Live Incident Feed */}
