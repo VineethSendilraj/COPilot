@@ -40,11 +40,11 @@
    - Avoid for data fetching or state management.
  
  Package Management
-- ALWAYS use PNPM as the package manager for all projects.
-- Use 'pnpm install' instead of 'npm install' or 'yarn install'.
-- Use 'pnpm add' for adding dependencies, 'pnpm add -D' for dev dependencies.
-- Use 'pnpm run' for running scripts defined in package.json.
-- Create pnpm-workspace.yaml for monorepo setups when applicable.
-- Prefer pnpm's efficient node_modules structure and disk space optimization.
+- ALWAYS use Yarn as the package manager for all projects.
+- Use 'yarn install' instead of 'npm install' or 'pnpm install'.
+- Use 'yarn add' for adding dependencies, 'yarn add -D' for dev dependencies.
+- Use 'yarn run' or 'yarn' for running scripts defined in package.json.
+- Create yarn workspaces configuration for monorepo setups when applicable.
+- Prefer Yarn's efficient dependency resolution and workspace features.
 
 Follow Next.js docs for Data Fetching, Rendering, and Routing.

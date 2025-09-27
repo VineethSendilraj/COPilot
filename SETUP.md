@@ -1,6 +1,6 @@
 # Supabase Next.js App Setup Guide
 
-This project is based on the [Vercel Supabase template](https://vercel.com/templates/authentication/supabase) and configured according to your Cursor rules with PNPM as the package manager.
+This project is based on the [Vercel Supabase template](https://vercel.com/templates/authentication/supabase) and configured according to your Cursor rules with Yarn as the package manager.
 
 ## 🚀 Quick Start
 
@@ -30,11 +30,11 @@ This project is based on the [Vercel Supabase template](https://vercel.com/templ
 
 ### 4. Install Dependencies & Run
 ```bash
-# Install dependencies (using PNPM as per project rules)
-pnpm install
+# Install dependencies (using Yarn as per project rules)
+yarn install
 
 # Start the development server
-pnpm run dev
+yarn dev
 ```
 
 Visit [http://localhost:3000](http://localhost:3000) to see your app!
@@ -92,16 +92,16 @@ This template includes:
 - **React 19** with Server Components
 - **TypeScript** for type safety
 - **Supabase** for authentication & database
-- **PNPM** for package management
+- **Yarn** for package management
 - **Tailwind CSS** for styling
 
 ## 🔧 Available Scripts
 
 ```bash
-pnpm run dev      # Start development server
-pnpm run build    # Build for production
-pnpm run start    # Start production server
-pnpm run lint     # Run ESLint
+yarn dev          # Start development server
+yarn build        # Build for production
+yarn start        # Start production server
+yarn lint         # Run ESLint
 ```
 
 ## 📖 Next Steps
@@ -119,7 +119,7 @@ The easiest way to deploy is using the [Vercel Platform](https://vercel.com/new)
 
 ## 🎯 Project follows these principles:
 
-- Uses **PNPM** exclusively for package management
+- Uses **Yarn** exclusively for package management
 - Follows **TypeScript best practices**
 - Implements **modern Next.js patterns**
 - Uses **Server Components** by default
