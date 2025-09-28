@@ -2,7 +2,7 @@ import asyncio
 from livekit import rtc
 import cv2
 import pyaudio
-import pyttsx3
+import subprocess
 import threading
 
 async def publish_stream():
@@ -14,24 +14,12 @@ async def publish_stream():
         print("✅ Connected to LiveKit room - ready to receive alerts!")
     
     def play_alert_audio(text):
-        """Play TTS alert audio using pyttsx3 - direct speaker output"""
+        """Play TTS alert audio using espeak via subprocess - direct speaker output"""
         try:
             print(f"🔊 Speaking alert: {text}")
-            
-            # Initialize TTS engine
-            engine = pyttsx3.init()
-            
-            # Configure voice settings
-            engine.setProperty('rate', 150)  # Speed of speech
-            engine.setProperty('volume', 1.0)  # Maximum volume
-            
-            # Speak the alert directly through speakers
-            engine.say(text)
-            engine.runAndWait()
-            
-            print(f"✅ Alert spoken successfully through speakers")
-                
-        except Exception as e:
+            subprocess.run(["espeak", "-s", "150", "-a", "200", text], check=True)
+            print(f"✅ Alert spoken successfully through headphone jack")
+        except subprocess.CalledProcessError as e:
             print(f"❌ Error playing TTS alert: {e}")
             import traceback
             traceback.print_exc()
@@ -42,15 +30,13 @@ async def publish_stream():
         if data.topic == "alert":
             text = data.data.decode()
             print(f"🚨 Alert message: {text}")
-            
-            # Play audio in a separate thread to avoid blocking
             audio_thread = threading.Thread(target=play_alert_audio, args=(text,))
             audio_thread.daemon = False  # Don't kill thread when main exits
             audio_thread.start()
             print(f"🎵 Started audio thread for alert")
     
-    url = "ws://172.20.10.2:7880"
-    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTkwNDcxMDMsImlkZW50aXR5IjoicGRhLW9mZmljZXIiLCJpc3MiOiJkZXZrZXkiLCJuYW1lIjoicGRhLW9mZmljZXIiLCJuYmYiOjE3NTg5NjA3MDMsInN1YiI6InBkYS1vZmZpY2VyIiwidmlkZW8iOnsicm9vbSI6InBkYS1yb29tIiwicm9vbUpvaW4iOnRydWV9fQ.iVNQM0ycYHHhm45gUk5GIyYUg_2PqEkSkKncC2v535k"
+    url = "ws://172.20.10.2:7880"  # Update with your Mac IP
+    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTkwNDcxMDMsImlkZW50aXR5IjoicGRhLW9mZmljZXIiLCJpc3MiOiJkZXZrZXkiLCJuYW1lIjoicGRhLW9mZmljZXIiLCJuYmYiOjE3NTg5NjA3MDMsInN1YiI6InBkYS1vZmZpY2VyIiwidmlkZW8iOnsicm9vbSI6InBkYS1yb29tIiwicm9vbUpvaW4iOnRydWV9fQ.iVNQM0ycYHHhm45gUk5GIyYUg_2PqEkSkKncC2v535k"  # Replace with a new token if needed
     await room.connect(url, token)
 
     # Video track
@@ -85,12 +71,12 @@ async def publish_stream():
                 frame_bytes = frame_rgb.tobytes()
                 video_frame = rtc.VideoFrame(640, 480, rtc.VideoBufferType.RGB24, frame_bytes)
                 video_source.capture_frame(video_frame)
-                # print("📷 Video frame captured") # Commented out to reduce log spam
+                # print("📷 Video frame captured")  # Commented out to reduce log spam
             
             audio_data = stream.read(1024, exception_on_overflow=False)
             audio_frame = rtc.AudioFrame(data=audio_data, sample_rate=48000, num_channels=1, samples_per_channel=1024)
             await audio_source.capture_frame(audio_frame)
-            # print("🎵 Audio frame captured") # Commented out to reduce log spam
+            # print("🎵 Audio frame captured")  # Commented out to reduce log spam
             
             await asyncio.sleep(0.066)  # ~15fps
     finally:
