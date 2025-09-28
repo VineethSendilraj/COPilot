@@ -12,6 +12,11 @@ export const metadata: Metadata = {
   title: "COPilot - AI-Powered Police Safety System",
   description:
     "Real-time incident monitoring and AI-powered analysis for law enforcement",
+  icons: {
+    icon: "/copilot_favicon.png",
+    shortcut: "/copilot_favicon.png",
+    apple: "/copilot_favicon.png",
+  },
 };
 
 const geistSans = Geist({
