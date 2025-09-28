@@ -9,41 +9,38 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+// Removed unused Badge import
 import { Button } from "@/components/ui/button";
 import { Navigation } from "@/components/navigation";
 import {
   Clock,
   AlertTriangle,
   Shield,
-  Users,
   Play,
   CheckCircle,
-  XCircle,
   RefreshCw,
-  Video,
-  User,
-  Badge as BadgeIcon,
 } from "lucide-react";
-import { Incident, Officer, Alert, DashboardStats } from "@/lib/types/database";
+import { Incident, DashboardStats } from "@/lib/types/database";
 import { StreamProvider } from "@/components/livekit/stream-provider";
 import { IncidentVideoStream } from "@/components/livekit/incident-video-stream";
 import { AgentDataDisplay } from "@/components/agent-data-display";
+import { MastraInsights } from "@/components/mastra-insights";
+import { useRealtimeData } from "@/hooks/use-realtime-data";
 
 export default function Dashboard() {
-  const [incidents, setIncidents] = useState<Incident[]>([]);
-  const [officers, setOfficers] = useState<Officer[]>([]);
-  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(
+    null
+  );
   const [stats, setStats] = useState<DashboardStats>({
     total_incidents: 0,
     active_incidents: 0,
     resolved_today: 0,
     critical_alerts: 0,
   });
-  const [loading, setLoading] = useState(true);
-  const [selectedIncident, setSelectedIncident] = useState<Incident | null>(
-    null
-  );
+
+  // Use the new real-time data hook
+  const { data, loading } = useRealtimeData();
+  const { incidents, alerts } = data;
 
   const supabase = createClient();
 
@@ -57,119 +54,32 @@ export default function Dashboard() {
         window.location.href = "/auth/login";
         return;
       }
-
-      // If authenticated, proceed with data fetching
-      fetchData();
     };
 
     checkAuth();
+  }, [supabase]);
 
-    // Set up automatic refresh every 2 seconds (background updates)
-    const refreshInterval = setInterval(() => {
-      fetchData(true); // Pass true to indicate this is a background refresh
-    }, 2000);
+  // Calculate stats when data changes
+  useEffect(() => {
+    const activeIncidents = incidents.filter((i) => !i.is_resolved).length;
+    const criticalAlerts = alerts.filter(
+      (a) =>
+        a.alert_type === "officer_aggression" ||
+        a.alert_type === "officer_in_danger" ||
+        a.alert_type === "suspect_weapon_detected"
+    ).length;
+    const today = new Date().toISOString().split("T")[0];
+    const resolvedToday = incidents.filter(
+      (i) => i.is_resolved && i.resolved_at?.startsWith(today)
+    ).length;
 
-    // Set up real-time subscriptions
-    const incidentsSubscription = supabase
-      .channel("incidents")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "incidents" },
-        () => fetchData()
-      )
-      .subscribe();
-
-    const alertsSubscription = supabase
-      .channel("alerts")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "alerts" },
-        () => fetchData()
-      )
-      .subscribe();
-
-    return () => {
-      clearInterval(refreshInterval);
-      incidentsSubscription.unsubscribe();
-      alertsSubscription.unsubscribe();
-    };
-  }, []);
-
-  const fetchData = async (isBackgroundRefresh = false) => {
-    try {
-      // Only show loading spinner on initial load, not background refreshes
-      if (!isBackgroundRefresh) {
-        setLoading(true);
-      }
-
-      // Fetch incidents with officer details
-      const { data: incidentsData, error: incidentsError } = await supabase
-        .from("incidents")
-        .select(
-          `
-          *,
-          officer:officers(*)
-        `
-        )
-        .order("created_at", { ascending: false });
-
-      if (incidentsError) throw incidentsError;
-
-      // Fetch officers
-      const { data: officersData, error: officersError } = await supabase
-        .from("officers")
-        .select("*")
-        .eq("is_active", true);
-
-      if (officersError) throw officersError;
-
-      // Fetch recent alerts
-      const { data: alertsData, error: alertsError } = await supabase
-        .from("alerts")
-        .select(
-          `
-          *,
-          incident:incidents(*),
-          officer:officers(*)
-        `
-        )
-        .eq("is_dismissed", false)
-        .order("created_at", { ascending: false })
-        .limit(10);
-
-      if (alertsError) throw alertsError;
-
-      setIncidents(incidentsData || []);
-      setOfficers(officersData || []);
-      setAlerts(alertsData || []);
-
-      // Calculate stats
-      const activeIncidents =
-        incidentsData?.filter((i) => !i.is_resolved).length || 0;
-      const criticalAlerts =
-        alertsData?.filter(
-          (a) =>
-            a.alert_type === "officer_aggression" ||
-            a.alert_type === "officer_in_danger"
-        ).length || 0;
-      const today = new Date().toISOString().split("T")[0];
-      const resolvedToday =
-        incidentsData?.filter(
-          (i) => i.is_resolved && i.resolved_at?.startsWith(today)
-        ).length || 0;
-
-      setStats({
-        total_incidents: incidentsData?.length || 0,
-        active_incidents: activeIncidents,
-        resolved_today: resolvedToday,
-        critical_alerts: criticalAlerts,
-      });
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setStats({
+      total_incidents: incidents.length,
+      active_incidents: activeIncidents,
+      resolved_today: resolvedToday,
+      critical_alerts: criticalAlerts,
+    });
+  }, [incidents, alerts]);
 
   const resolveIncident = async (incidentId: string) => {
     try {
@@ -182,53 +92,22 @@ export default function Dashboard() {
         .eq("id", incidentId);
 
       if (error) throw error;
-      await fetchData();
+      // Data will be updated automatically via real-time subscriptions
     } catch (error) {
       console.error("Error resolving incident:", error);
     }
   };
 
-  const getRiskColor = (riskLevel: string) => {
-    switch (riskLevel) {
-      case "low":
-        return "bg-green-100 text-green-800 border-green-200";
-      case "medium":
-        return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "high":
-        return "bg-orange-100 text-orange-800 border-orange-200";
-      case "critical":
-        return "bg-red-100 text-red-800 border-red-200";
-      default:
-        return "bg-muted text-muted-foreground border-border";
-    }
+  const handleRecommendationAction = async (
+    action: string,
+    incidentId: string
+  ) => {
+    console.log(`Executing action: ${action} for incident: ${incidentId}`);
+    // Here you would implement the actual action execution
+    // For now, we'll just log it
   };
 
-  const getEscalationIcon = (type: string) => {
-    switch (type) {
-      case "officer_aggression":
-        return <AlertTriangle className="h-4 w-4" />;
-      case "suspect_weapon_detected":
-        return <Shield className="h-4 w-4" />;
-      case "verbal_escalation":
-        return <Users className="h-4 w-4" />;
-      case "multiple_officers_needed":
-        return <Users className="h-4 w-4" />;
-      case "suspect_aggression":
-        return <AlertTriangle className="h-4 w-4" />;
-      case "officer_in_danger":
-        return <Shield className="h-4 w-4" />;
-      default:
-        return <AlertTriangle className="h-4 w-4" />;
-    }
-  };
-
-  const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-    });
-  };
+  // Removed unused utility functions - now handled by components
 
   if (loading) {
     return (
@@ -356,6 +235,17 @@ export default function Dashboard() {
                               className="h-full"
                             />
                           </div>
+                        </div>
+
+                        {/* Mastra AI Insights */}
+                        <div className="mt-4">
+                          <MastraInsights
+                            incident={incident}
+                            alerts={alerts.filter(
+                              (alert) => alert.incident_id === incident.id
+                            )}
+                            onRecommendationAction={handleRecommendationAction}
+                          />
                         </div>
 
                         {/* Action Buttons */}
