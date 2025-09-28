@@ -4,8 +4,30 @@ import numpy as np
 import cv2
 import os
 from livekit import rtc
-from moviepy.editor import VideoFileClip
+from livekit.api import AccessToken, VideoGrants
+from moviepy import VideoFileClip
 from pydub import AudioSegment
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv('.env')
+
+def generate_token(identity="server", name="Server", room="copilot-room"):
+    """Generate a LiveKit access token"""
+    api_key = os.getenv('LIVEKIT_API_KEY')
+    api_secret = os.getenv('LIVEKIT_API_SECRET')
+    
+    if not api_key or not api_secret:
+        raise ValueError("LIVEKIT_API_KEY and LIVEKIT_API_SECRET must be set in .env file")
+    
+    token = AccessToken(api_key, api_secret) \
+        .with_identity(identity) \
+        .with_name(name) \
+        .with_grants(VideoGrants(
+            room_join=True,
+            room=room,
+        ))
+    return token.to_jwt()
 
 async def send_mp3_alert(room, mp3_filename, alert_text):
     """Send MP3 audio file as data packet to LiveKit room"""
@@ -224,10 +246,13 @@ async def main():
         
         print(f"✅ Track {track.kind} ready for processing")
 
-    url = "ws://localhost:7880"
-    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NTkwODk0OTEsImlkZW50aXR5Ijoic2VydmVyIiwiaXNzIjoiZGV2a2V5IiwibmFtZSI6IlNlcnZlciIsIm5iZiI6MTc1OTAwMzA5MSwic3ViIjoic2VydmVyIiwidmlkZW8iOnsicm9vbSI6InBkYS1yb29tIiwicm9vbUpvaW4iOnRydWV9fQ.u0wmop3j4MYAGKhgpp6VeH1FMr4fpAOAQo0cJ12yrPk"
+    url = os.getenv("LIVEKIT_URL")
+    if not url:
+        raise ValueError("LIVEKIT_URL must be set in .env file")
+    
+    token = generate_token(identity="server", name="Server", room="copilot-room")
     await room.connect(url, token)
-    print("✅ Server connected to LiveKit room")
+    print(f"✅ Server connected to LiveKit room: {url}")
     
     # Test MP3 alert after 5 seconds
     async def test_mp3_alert():
