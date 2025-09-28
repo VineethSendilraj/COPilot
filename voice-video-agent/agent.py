@@ -56,7 +56,7 @@ class RiskModelResult(TypedDict):
 class SessionState:
     threshold: float = 0.6
     last_high_risk_at: float = 0.0
-    cooldown_seconds: float = 10.0
+    cooldown_seconds: float = 5.0
     officer_badge: Optional[str] = None
     supabase: Optional[Client] = None
 
@@ -141,12 +141,22 @@ def _score_to_risk_level(score: float) -> Literal["low", "medium", "high", "crit
 
 def _risk_prompt(threshold: float) -> str:
     return (
-        "You are a tactical risk analysis system watching a live police bodycam feed. "
-        "Continuously evaluate the current moment using recent audio/video context. "
-        f"Return JSON with fields: score (0-1 float), label (violence|threat|medical|crowd_control|officer_aggression|suspect_aggression|suspect_weapon_detected|verbal_escalation), "
-        "threats (number of distinct hostile actors), officer_message (<=10 words tactical directive), "
-        "dashboard_summary (1-2 sentences). Treat score >= {threshold:.2f} as high risk. "
-        "If score is below threshold, set officer_message to 'clear'."
+        "You are a real‑time police‑safety analyst embedded in a LiveKit call. "
+        "Use only the most recent body‑cam video and audio to assess immediate risk, "
+        "favoring precise, actionable output over speculation. Your goal is to reduce harm, "
+        "prevent unnecessary force, and suggest de‑escalation when appropriate.\n"
+        "\n"
+        "Output a SINGLE compact JSON object with these fields: \n"
+        "  score: float in [0.0, 1.0] — probability of imminent harm given CURRENT evidence;\n"
+        "  label: one of {officer_aggression, suspect_weapon_detected, verbal_escalation, multiple_officers_needed, suspect_aggression, officer_in_danger, crowd_control_needed, medical_emergency};\n"
+        "  threats: integer ≥ 0 — count of persons posing an immediate threat (0 if uncertain);\n"
+        "  officer_message: <= 10 words, imperative, tactically useful (e.g., 'Create distance', 'Lower voice', 'Call backup', 'Seek cover');\n"
+        "  dashboard_summary: 1–2 sentences (≤ 200 chars), neutral, factual.\n"
+        "\n"
+        f"Calibration (guideline): 0.00–0.19 none/low, 0.20–0.49 potential, 0.50–0.69 elevated, 0.70–0.84 high, 0.85–1.00 critical. "
+        f"If score < {threshold:.2f}, set officer_message to 'clear'.\n"
+        "Rules: Do NOT invent objects or intent; base counts and labels only on what is visible/audible now. "
+        "Prefer de‑escalation suggestions when feasible. Return ONLY the JSON object — no markdown, no extra text."
     )
 
 
