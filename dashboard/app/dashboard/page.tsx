@@ -64,6 +64,11 @@ export default function Dashboard() {
 
     checkAuth();
 
+    // Set up automatic refresh every 2 seconds (background updates)
+    const refreshInterval = setInterval(() => {
+      fetchData(true); // Pass true to indicate this is a background refresh
+    }, 2000);
+
     // Set up real-time subscriptions
     const incidentsSubscription = supabase
       .channel("incidents")
@@ -84,14 +89,18 @@ export default function Dashboard() {
       .subscribe();
 
     return () => {
+      clearInterval(refreshInterval);
       incidentsSubscription.unsubscribe();
       alertsSubscription.unsubscribe();
     };
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (isBackgroundRefresh = false) => {
     try {
-      setLoading(true);
+      // Only show loading spinner on initial load, not background refreshes
+      if (!isBackgroundRefresh) {
+        setLoading(true);
+      }
 
       // Fetch incidents with officer details
       const { data: incidentsData, error: incidentsError } = await supabase
@@ -190,7 +199,7 @@ export default function Dashboard() {
       case "critical":
         return "bg-red-100 text-red-800 border-red-200";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-muted text-muted-foreground border-border";
     }
   };
 
@@ -233,35 +242,19 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <Navigation />
 
-      {/* Dashboard Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Police Safety Dashboard
-              </h1>
-              <p className="text-sm text-gray-600">
-                Real-time monitoring and incident management
-              </p>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Button onClick={fetchData} variant="outline" size="sm">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
-              </Button>
-              <div className="text-sm text-gray-500">
-                Last updated: {new Date().toLocaleTimeString()}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Dashboard Header */}
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-foreground">
+            Police Safety Dashboard
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Real-time monitoring and incident management
+          </p>
+        </div>
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card>
@@ -332,7 +325,7 @@ export default function Dashboard() {
               <StreamProvider roomName="officer-stream-room">
                 <div className="space-y-6">
                   {incidents.length === 0 ? (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className="text-center py-8 text-muted-foreground">
                       No incidents at this time
                     </div>
                   ) : (
@@ -397,36 +390,6 @@ export default function Dashboard() {
                   )}
                 </div>
               </StreamProvider>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Alerts */}
-        <div className="mb-8">
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Alerts</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {alerts.length === 0 ? (
-                  <p className="text-sm text-gray-500">No recent alerts</p>
-                ) : (
-                  alerts.map((alert) => (
-                    <div key={alert.id} className="p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-start space-x-2">
-                        {getEscalationIcon(alert.alert_type)}
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{alert.message}</p>
-                          <p className="text-xs text-gray-500">
-                            {formatTime(alert.created_at)}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
             </CardContent>
           </Card>
         </div>
