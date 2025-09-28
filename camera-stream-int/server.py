@@ -3,6 +3,7 @@ import asyncio
 import numpy as np
 import cv2
 import os
+import os
 from livekit import rtc
 from livekit.api import AccessToken, VideoGrants
 from moviepy import VideoFileClip
@@ -94,6 +95,10 @@ async def main():
     # Audio source for MP4 playback
     audio_source = None
     audio_track = None
+    
+    # Audio source for MP4 playback
+    audio_source = None
+    audio_track = None
 
     @room.on("track_subscribed")
     def on_track_subscribed(track: rtc.Track, publication: rtc.TrackPublication, participant: rtc.RemoteParticipant):
@@ -118,6 +123,8 @@ async def main():
                             
                             if frame_count % 3 == 0:
                                 frame_data = np.frombuffer(frame.data, dtype=np.uint8)
+                                if frame_count % 30 == 0:  # Print every 10th frame (every 3 seconds at 10fps)
+                                    print(f"📹 Video frame {frame_count}: width={frame.width}, height={frame.height}, data_size={len(frame_data)}")
                                 if frame_count % 30 == 0:  # Print every 10th frame (every 3 seconds at 10fps)
                                     print(f"📹 Video frame {frame_count}: width={frame.width}, height={frame.height}, data_size={len(frame_data)}")
                                 
@@ -171,6 +178,10 @@ async def main():
                                         if frame_count % 30 == 0:  # Print every 10th frame
                                             print(f"🔍 Motion check: contours={significant_contours}, area={total_motion_area:.0f}, has_motion={has_motion}, history={motion_history}")
                                         
+                                        # Debug motion detection
+                                        if frame_count % 30 == 0:  # Print every 10th frame
+                                            print(f"🔍 Motion check: contours={significant_contours}, area={total_motion_area:.0f}, has_motion={has_motion}, history={motion_history}")
+                                        
                                         # Keep only last 5 frames
                                         if len(motion_history) > 5:
                                             motion_history.pop(0)
@@ -184,6 +195,9 @@ async def main():
                                                 if (current_time - last_alert_time) > 8:  # Increased cooldown
                                                     last_alert_time = current_time
                                                     alert = f"Motion detected from {participant.identity} - Area: {total_motion_area:.0f}px"
+                                                    
+                                                    # Send MP3 audio alert instead of text
+                                                    await send_mp3_alert(room, "motion_alert.mp3", alert)
                                                     
                                                     # Send MP3 audio alert instead of text
                                                     await send_mp3_alert(room, "motion_alert.mp3", alert)
@@ -225,12 +239,17 @@ async def main():
                                 volume = np.sqrt(np.mean(audio_data.astype(float) ** 2))
                                 if frame_count % 100 == 0:  # Print every 10th audio frame
                                     print(f"🎵 Audio frame {frame_count}: volume={volume:.1f}")
+                                if frame_count % 100 == 0:  # Print every 10th audio frame
+                                    print(f"🎵 Audio frame {frame_count}: volume={volume:.1f}")
                                 
                                 if volume > 800:  # Lowered threshold
                                     current_time = asyncio.get_event_loop().time()
                                     if (current_time - last_alert_time) > 3:
                                         last_alert_time = current_time
                                         alert = f"Speech detected from {participant.identity} - Volume: {volume:.1f}"
+                                        
+                                        # Send MP3 audio alert instead of text
+                                        await send_mp3_alert(room, "speech_alert.mp3", alert)
                                         
                                         # Send MP3 audio alert instead of text
                                         await send_mp3_alert(room, "speech_alert.mp3", alert)
