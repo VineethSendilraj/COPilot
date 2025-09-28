@@ -1,0 +1,11 @@
+# LiveKit Configuration
+# These should match the same values used in the voice-video-agent
+LIVEKIT_URL=wss://your-livekit-server.com
+LIVEKIT_API_KEY=your_api_key_here
+LIVEKIT_API_SECRET=your_api_secret_here
+
+# Optional: Specify agent name to connect with specific agent
+# AGENT_NAME=risk-aware-assistant
+
+# Optional: For development/debugging
+# LOG_LEVEL=DEBUG

@@ -1,0 +1,12 @@
+# LiveKit packages for real-time communication
+livekit-api>=1.0.0
+livekit-agents>=1.2.0
+
+# Environment and configuration
+python-dotenv>=1.0.0
+
+# Async console I/O
+aioconsole>=0.6.0
+
+# Optional: Rich console formatting (uncomment if desired)
+# rich>=13.0.0
