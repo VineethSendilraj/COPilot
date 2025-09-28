@@ -13,6 +13,8 @@ export type RiskLevel = "low" | "medium" | "high" | "critical";
 export interface Officer {
   id: string;
   created_at: string;
+  name?: string;
+  badge_number?: string;
 }
 
 export interface Incident {
@@ -22,6 +24,8 @@ export interface Incident {
   risk_level: RiskLevel;
   description?: string;
   created_at: string;
+  is_resolved?: boolean;
+  resolved_at?: string;
   officer?: Officer;
 }
 

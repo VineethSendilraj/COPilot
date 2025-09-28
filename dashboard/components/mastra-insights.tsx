@@ -41,27 +41,15 @@ export function MastraInsights({
   const [error, setError] = useState<string | null>(null);
 
   const generateInsights = useCallback(async () => {
+    console.log("MastraInsights: generateInsights called for incident:", incident.id);
     setLoading(true);
     setError(null);
 
     try {
-      // Call the API route to analyze the incident
-      const response = await fetch("/api/mastra/analyze-incident", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ incident }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to analyze incident");
-      }
-
-      await response.json();
-
-      // Parse the analysis and create insights
+      // For now, generate static insights without API call
+      // This will help us see if the component is rendering
       const newInsights: Insight[] = [];
+      console.log("MastraInsights: Creating insights for incident:", incident.id, "with escalation_type:", incident.escalation_type, "and risk_level:", incident.risk_level);
 
       // Risk assessment insight
       newInsights.push({
@@ -98,7 +86,9 @@ export function MastraInsights({
       // Check for backup requirements
       if (
         incident.risk_level === "high" ||
-        incident.escalation_type === "high_risk"
+        incident.risk_level === "critical" ||
+        incident.escalation_type === "officer_aggression" ||
+        incident.escalation_type === "officer_in_danger"
       ) {
         newInsights.push({
           id: `backup_${incident.id}`,
@@ -117,6 +107,7 @@ export function MastraInsights({
         });
       }
 
+      console.log("MastraInsights: Generated insights:", newInsights.length, "insights for incident:", incident.id);
       setInsights(newInsights);
     } catch (err) {
       console.error("Error generating insights:", err);
@@ -171,7 +162,8 @@ export function MastraInsights({
   const getRecommendations = (escalationType: string, riskLevel: string) => {
     const recommendations = [];
 
-    if (escalationType === "high_risk" || riskLevel === "high") {
+    // Handle the actual escalation types from our static data
+    if (escalationType === "officer_aggression" || escalationType === "officer_in_danger" || riskLevel === "critical") {
       recommendations.push({
         title: "Immediate Response Required",
         description:
@@ -185,11 +177,11 @@ export function MastraInsights({
       });
     }
 
-    if (escalationType === "escalating") {
+    if (escalationType === "suspect_aggression" || escalationType === "verbal_escalation") {
       recommendations.push({
-        title: "Escalation Management",
+        title: "De-escalation Required",
         description:
-          "Situation is escalating. Implement de-escalation protocols.",
+          "Situation requires de-escalation protocols and careful monitoring.",
         priority: "high" as const,
         actions: [
           "Deploy de-escalation team",
@@ -199,7 +191,35 @@ export function MastraInsights({
       });
     }
 
-    if (escalationType === "routine") {
+    if (escalationType === "suspect_weapon_detected") {
+      recommendations.push({
+        title: "Tactical Response Required",
+        description:
+          "Weapon detected. Tactical response team should be deployed immediately.",
+        priority: "critical" as const,
+        actions: [
+          "Deploy tactical team",
+          "Establish perimeter",
+          "Evacuate civilians",
+        ],
+      });
+    }
+
+    if (escalationType === "multiple_officers_needed" || escalationType === "crowd_control_needed") {
+      recommendations.push({
+        title: "Additional Resources Required",
+        description:
+          "Additional officers and resources needed for proper incident management.",
+        priority: "high" as const,
+        actions: [
+          "Dispatch additional units",
+          "Coordinate with other agencies",
+          "Prepare crowd control equipment",
+        ],
+      });
+    }
+
+    if (escalationType === "routine" || riskLevel === "low") {
       recommendations.push({
         title: "Routine Response",
         description: "Standard response procedures are appropriate.",
@@ -261,6 +281,7 @@ export function MastraInsights({
   };
 
   useEffect(() => {
+    console.log("MastraInsights: useEffect triggered for incident:", incident.id);
     generateInsights();
   }, [generateInsights]);
 
