@@ -1,15 +1,10 @@
 -- Police Safety Alert System Database Schema
--- This schema is designed to work with voice-video-agent/agent.py outputs
+-- Essential tables and columns only - matches voice-video-agent/agent.py outputs
 
--- Officers table
+-- Officers table (essential columns only)
 CREATE TABLE officers (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  badge_number VARCHAR(10) UNIQUE NOT NULL,
-  name VARCHAR(100) NOT NULL,
-  email VARCHAR(255) UNIQUE NOT NULL,
-  is_active BOOLEAN DEFAULT true,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Escalation types enum (matching voice-video-agent/agent.py risk_label values)
@@ -32,18 +27,17 @@ CREATE TYPE risk_level AS ENUM (
   'critical'
 );
 
--- Incidents table (matches voice-video-agent/agent.py _insert_dashboard_records)
+-- Incidents table (essential columns only)
 CREATE TABLE incidents (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   officer_id UUID REFERENCES officers(id) ON DELETE CASCADE,
   escalation_type escalation_type NOT NULL,
   risk_level risk_level NOT NULL,
   description TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Alerts table (matches voice-video-agent/agent.py _insert_dashboard_records)
+-- Alerts table (essential columns only)
 CREATE TABLE alerts (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   officer_id UUID REFERENCES officers(id) ON DELETE CASCADE,
@@ -52,14 +46,6 @@ CREATE TABLE alerts (
   message TEXT NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
--- Create indexes for better performance
-CREATE INDEX idx_officers_badge_number ON officers(badge_number);
-CREATE INDEX idx_officers_active ON officers(is_active);
-CREATE INDEX idx_incidents_officer_id ON incidents(officer_id);
-CREATE INDEX idx_incidents_created_at ON incidents(created_at);
-CREATE INDEX idx_alerts_officer_id ON alerts(officer_id);
-CREATE INDEX idx_alerts_incident_id ON alerts(incident_id);
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE officers ENABLE ROW LEVEL SECURITY;
