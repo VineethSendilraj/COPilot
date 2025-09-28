@@ -122,7 +122,7 @@ export function AgentDataDisplay({
               <span className="text-sm font-medium block mb-1">
                 AI Analysis
               </span>
-              <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
+              <p className="text-sm text-muted-foreground bg-muted p-2 rounded">
                 {incident.description}
               </p>
             </div>
@@ -143,17 +143,17 @@ export function AgentDataDisplay({
             {incidentAlerts.slice(0, 3).map((alert) => (
               <div
                 key={alert.id}
-                className="p-3 bg-orange-50 border border-orange-200 rounded-lg"
+                className="p-3 bg-orange-100/20 border border-orange-200/50 rounded-lg"
               >
                 <div className="flex items-start gap-2">
                   {getEscalationIcon(alert.alert_type)}
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-orange-800">
+                    <p className="text-sm font-medium text-orange-200">
                       {alert.message}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      <Clock className="h-3 w-3 text-orange-600" />
-                      <span className="text-xs text-orange-600">
+                      <Clock className="h-3 w-3 text-orange-400" />
+                      <span className="text-xs text-orange-400">
                         {formatTime(alert.created_at)}
                       </span>
                       <Badge variant="outline" className="text-xs">
@@ -182,22 +182,22 @@ export function AgentDataDisplay({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          <div className="flex items-center gap-3 p-2 bg-blue-50 rounded">
+          <div className="flex items-center gap-3 p-2 bg-blue-100/20 rounded">
             <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
             <div className="flex-1">
               <p className="text-sm font-medium">Incident Created</p>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-muted-foreground">
                 {formatTime(incident.created_at)}
               </p>
             </div>
           </div>
 
           {incident.is_resolved && incident.resolved_at && (
-            <div className="flex items-center gap-3 p-2 bg-green-50 rounded">
+            <div className="flex items-center gap-3 p-2 bg-green-100/20 rounded">
               <div className="w-2 h-2 bg-green-500 rounded-full"></div>
               <div className="flex-1">
                 <p className="text-sm font-medium">Incident Resolved</p>
-                <p className="text-xs text-gray-600">
+                <p className="text-xs text-muted-foreground">
                   {formatTime(incident.resolved_at)}
                 </p>
               </div>
