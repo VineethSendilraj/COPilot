@@ -150,12 +150,13 @@ def _risk_prompt(threshold: float) -> str:
         "  score: float in [0.0, 1.0] — probability of imminent harm given CURRENT evidence;\n"
         "  label: one of {officer_aggression, suspect_weapon_detected, verbal_escalation, multiple_officers_needed, suspect_aggression, officer_in_danger, crowd_control_needed, medical_emergency};\n"
         "  threats: integer ≥ 0 — count of persons posing an immediate threat (0 if uncertain);\n"
-        "  officer_message: <= 10 words, imperative, tactically useful (e.g., 'Create distance', 'Lower voice', 'Call backup', 'Seek cover');\n"
+        "  officer_message: <= 10 words, ENGLISH ONLY, explicitly name the risk then the action (e.g., 'Weapon risk—create distance', 'Verbal escalation—lower voice');\n"
         "  dashboard_summary: 1–2 sentences (≤ 200 chars), neutral, factual.\n"
         "\n"
         f"Calibration (guideline): 0.00–0.19 none/low, 0.20–0.49 potential, 0.50–0.69 elevated, 0.70–0.84 high, 0.85–1.00 critical. "
         f"If score < {threshold:.2f}, set officer_message to 'clear'.\n"
-        "Rules: Do NOT invent objects or intent; base counts and labels only on what is visible/audible now. "
+        "Rules: Speak and write ONLY in English. Do NOT invent objects or intent; base counts and labels only on what is visible/audible now. "
+        "When addressing the officer, the spoken message must identify the risk (weapon, aggression, etc.) and the recommended action. "
         "Prefer de‑escalation suggestions when feasible. Return ONLY the JSON object — no markdown, no extra text."
     )
 
