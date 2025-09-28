@@ -15,8 +15,6 @@ export interface Officer {
   badge_number: string;
   name: string;
   email: string;
-  current_latitude?: number;
-  current_longitude?: number;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -27,9 +25,6 @@ export interface Incident {
   officer_id: string;
   escalation_type: EscalationType;
   risk_level: RiskLevel;
-  latitude?: number;
-  longitude?: number;
-  address?: string;
   description?: string;
   is_resolved: boolean;
   resolved_at?: string;
@@ -82,16 +77,6 @@ export interface AlertWithDetails extends Alert {
 }
 
 // UI-specific types
-export interface MapMarker {
-  id: string;
-  latitude: number;
-  longitude: number;
-  type: EscalationType;
-  risk_level: RiskLevel;
-  officer_name: string;
-  badge_number: string;
-  is_resolved: boolean;
-}
 
 export interface DashboardStats {
   total_incidents: number;

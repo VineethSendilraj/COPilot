@@ -12,9 +12,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Navigation } from "@/components/navigation";
-import { SimpleMap } from "@/components/simple-map";
 import {
-  MapPin,
   Clock,
   AlertTriangle,
   Shield,
@@ -23,16 +21,14 @@ import {
   CheckCircle,
   XCircle,
   RefreshCw,
+  Video,
+  User,
+  Badge as BadgeIcon,
 } from "lucide-react";
-import {
-  Incident,
-  Officer,
-  Alert,
-  DashboardStats,
-  MapMarker,
-} from "@/lib/types/database";
+import { Incident, Officer, Alert, DashboardStats } from "@/lib/types/database";
 import { StreamProvider } from "@/components/livekit/stream-provider";
-import { OfficerStreamDisplay } from "@/components/livekit/officer-stream-display";
+import { IncidentVideoStream } from "@/components/livekit/incident-video-stream";
+import { AgentDataDisplay } from "@/components/agent-data-display";
 
 export default function Dashboard() {
   const [incidents, setIncidents] = useState<Incident[]>([]);
@@ -48,7 +44,6 @@ export default function Dashboard() {
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(
     null
   );
-  const [mapMarkers, setMapMarkers] = useState<MapMarker[]>([]);
 
   const supabase = createClient();
 
@@ -138,19 +133,6 @@ export default function Dashboard() {
       setIncidents(incidentsData || []);
       setOfficers(officersData || []);
       setAlerts(alertsData || []);
-
-      // Create map markers from incidents
-      const markers: MapMarker[] = (incidentsData || []).map((incident) => ({
-        id: incident.id,
-        latitude: incident.latitude || 40.7128,
-        longitude: incident.longitude || -74.006,
-        type: incident.escalation_type,
-        risk_level: incident.risk_level,
-        officer_name: incident.officer?.name || "Unknown",
-        badge_number: incident.officer?.badge_number || "N/A",
-        is_resolved: incident.is_resolved,
-      }));
-      setMapMarkers(markers);
 
       // Calculate stats
       const activeIncidents =
@@ -337,42 +319,18 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* Map View */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Incident Map</CardTitle>
-            <CardDescription>
-              Real-time view of incidents and officer locations
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <SimpleMap
-              markers={mapMarkers}
-              center={{ lat: 40.7128, lng: -74.006 }}
-              className="h-96"
-            />
-          </CardContent>
-        </Card>
-
-        {/* Live Officer Streams */}
+        {/* Live Incident Feed with Body Camera Streams */}
         <div className="mb-8">
-          <StreamProvider roomName="officer-stream-room">
-            <OfficerStreamDisplay />
-          </StreamProvider>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Live Incident Feed */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>Live Incident Feed</CardTitle>
-                <CardDescription>
-                  Real-time updates on ongoing incidents
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Live Incident Feed</CardTitle>
+              <CardDescription>
+                Real-time body camera streams and AI-powered incident monitoring
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <StreamProvider roomName="officer-stream-room">
+                <div className="space-y-6">
                   {incidents.length === 0 ? (
                     <div className="text-center py-8 text-gray-500">
                       No incidents at this time
@@ -381,191 +339,96 @@ export default function Dashboard() {
                     incidents.map((incident) => (
                       <div
                         key={incident.id}
-                        className={`p-4 border rounded-lg cursor-pointer transition-colors ${
+                        className={`p-6 border rounded-lg cursor-pointer transition-colors ${
                           selectedIncident?.id === incident.id
                             ? "border-blue-500 bg-blue-50"
                             : "border-gray-200 hover:border-gray-300"
                         }`}
                         onClick={() => setSelectedIncident(incident)}
                       >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <div className="flex items-center space-x-2 mb-2">
-                              {getEscalationIcon(incident.escalation_type)}
-                              <span className="font-medium">
-                                Officer #{incident.officer?.badge_number} -{" "}
-                                {incident.officer?.name}
-                              </span>
-                              <Badge
-                                className={getRiskColor(incident.risk_level)}
-                              >
-                                {incident.risk_level.toUpperCase()}
-                              </Badge>
-                              {incident.is_resolved && (
-                                <Badge
-                                  variant="secondary"
-                                  className="bg-green-100 text-green-800"
-                                >
-                                  RESOLVED
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-600 mb-2">
-                              {incident.description ||
-                                "No description available"}
-                            </p>
-                            <div className="flex items-center space-x-4 text-xs text-gray-500">
-                              <div className="flex items-center space-x-1">
-                                <MapPin className="h-3 w-3" />
-                                <span>
-                                  {incident.address || "Location not specified"}
-                                </span>
-                              </div>
-                              <div className="flex items-center space-x-1">
-                                <Clock className="h-3 w-3" />
-                                <span>{formatTime(incident.created_at)}</span>
-                              </div>
-                            </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                          {/* Live Body Camera Stream */}
+                          <div className="lg:col-span-1">
+                            <IncidentVideoStream
+                              incident={incident}
+                              className="w-full"
+                            />
                           </div>
-                          <div className="flex space-x-2">
+
+                          {/* AI Agent Data Display */}
+                          <div className="lg:col-span-2">
+                            <AgentDataDisplay
+                              incident={incident}
+                              alerts={alerts}
+                              className="h-full"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex space-x-2 mt-4 pt-4 border-t">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedIncident(incident);
+                            }}
+                          >
+                            <Play className="h-4 w-4 mr-2" />
+                            View Details
+                          </Button>
+                          {!incident.is_resolved && (
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                setSelectedIncident(incident);
+                                resolveIncident(incident.id);
                               }}
                             >
-                              <Play className="h-3 w-3 mr-1" />
-                              View
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Resolve
                             </Button>
-                            {!incident.is_resolved && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  resolveIncident(incident.id);
-                                }}
-                              >
-                                <CheckCircle className="h-3 w-3 mr-1" />
-                                Resolve
-                              </Button>
-                            )}
-                          </div>
+                          )}
                         </div>
                       </div>
                     ))
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </StreamProvider>
+            </CardContent>
+          </Card>
+        </div>
 
-          {/* Incident Details & Map */}
-          <div className="space-y-6">
-            {/* Incident Details */}
-            {selectedIncident ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Incident Details</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Officer
-                      </label>
-                      <p className="text-sm">
-                        #{selectedIncident.officer?.badge_number} -{" "}
-                        {selectedIncident.officer?.name}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Type
-                      </label>
-                      <p className="text-sm capitalize">
-                        {selectedIncident.escalation_type.replace("_", " ")}
-                      </p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Risk Level
-                      </label>
-                      <Badge
-                        className={getRiskColor(selectedIncident.risk_level)}
-                      >
-                        {selectedIncident.risk_level.toUpperCase()}
-                      </Badge>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Location
-                      </label>
-                      <p className="text-sm">{selectedIncident.address}</p>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-gray-500">
-                        Time
-                      </label>
-                      <p className="text-sm">
-                        {formatTime(selectedIncident.created_at)}
-                      </p>
-                    </div>
-                    {selectedIncident.description && (
-                      <div>
-                        <label className="text-sm font-medium text-gray-500">
-                          Description
-                        </label>
-                        <p className="text-sm">
-                          {selectedIncident.description}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardContent className="flex items-center justify-center h-32">
-                  <p className="text-gray-500">
-                    Select an incident to view details
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Recent Alerts */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Alerts</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {alerts.length === 0 ? (
-                    <p className="text-sm text-gray-500">No recent alerts</p>
-                  ) : (
-                    alerts.map((alert) => (
-                      <div key={alert.id} className="p-3 bg-gray-50 rounded-lg">
-                        <div className="flex items-start space-x-2">
-                          {getEscalationIcon(alert.alert_type)}
-                          <div className="flex-1">
-                            <p className="text-sm font-medium">
-                              {alert.message}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              {formatTime(alert.created_at)}
-                            </p>
-                          </div>
+        {/* Recent Alerts */}
+        <div className="mb-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Alerts</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {alerts.length === 0 ? (
+                  <p className="text-sm text-gray-500">No recent alerts</p>
+                ) : (
+                  alerts.map((alert) => (
+                    <div key={alert.id} className="p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-start space-x-2">
+                        {getEscalationIcon(alert.alert_type)}
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{alert.message}</p>
+                          <p className="text-xs text-gray-500">
+                            {formatTime(alert.created_at)}
+                          </p>
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

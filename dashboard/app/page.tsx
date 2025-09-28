@@ -18,17 +18,8 @@ export default function Home() {
         setIsAuthenticated(!!session);
 
         if (session) {
-          // User is authenticated, redirect based on device
-          const isMobile =
-            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-              navigator.userAgent
-            );
-
-          if (isMobile) {
-            router.push("/mobile");
-          } else {
-            router.push("/dashboard");
-          }
+          // User is authenticated, redirect to dashboard
+          router.push("/dashboard");
         } else {
           // User is not authenticated, redirect to login
           router.push("/auth/login");
@@ -47,7 +38,7 @@ export default function Home() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading Police Safety System...</p>
+          <p className="text-gray-600">Loading COPilot...</p>
         </div>
       </div>
     );
