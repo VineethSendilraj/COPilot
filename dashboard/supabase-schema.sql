@@ -6,8 +6,6 @@ CREATE TABLE officers (
   badge_number VARCHAR(10) UNIQUE NOT NULL,
   name VARCHAR(100) NOT NULL,
   email VARCHAR(255) UNIQUE NOT NULL,
-  current_latitude DECIMAL(10, 8),
-  current_longitude DECIMAL(11, 8),
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -39,9 +37,6 @@ CREATE TABLE incidents (
   officer_id UUID REFERENCES officers(id) ON DELETE CASCADE,
   escalation_type escalation_type NOT NULL,
   risk_level risk_level NOT NULL,
-  latitude DECIMAL(10, 8),
-  longitude DECIMAL(11, 8),
-  address TEXT,
   description TEXT,
   is_resolved BOOLEAN DEFAULT false,
   resolved_at TIMESTAMP WITH TIME ZONE,
@@ -109,16 +104,16 @@ CREATE POLICY "Allow all operations on incident_clips" ON incident_clips FOR ALL
 CREATE POLICY "Allow all operations on officer_notes" ON officer_notes FOR ALL USING (true);
 
 -- Insert sample data for development
-INSERT INTO officers (badge_number, name, email, current_latitude, current_longitude) VALUES
-('218', 'John Smith', 'john.smith@police.gov', 40.7128, -74.0060),
-('456', 'Sarah Johnson', 'sarah.johnson@police.gov', 40.7589, -73.9851),
-('789', 'Mike Davis', 'mike.davis@police.gov', 40.7505, -73.9934);
+INSERT INTO officers (badge_number, name, email) VALUES
+('218', 'John Smith', 'john.smith@police.gov'),
+('456', 'Sarah Johnson', 'sarah.johnson@police.gov'),
+('789', 'Mike Davis', 'mike.davis@police.gov');
 
 -- Insert sample incidents
-INSERT INTO incidents (officer_id, escalation_type, risk_level, latitude, longitude, address, description) VALUES
-((SELECT id FROM officers WHERE badge_number = '218'), 'suspect_aggression', 'high', 40.7128, -74.0060, '3rd & Main St', 'Suspect showing aggressive behavior during traffic stop'),
-((SELECT id FROM officers WHERE badge_number = '456'), 'verbal_escalation', 'medium', 40.7589, -73.9851, 'Broadway & 42nd', 'Verbal confrontation escalating between suspect and officer'),
-((SELECT id FROM officers WHERE badge_number = '789'), 'officer_aggression', 'critical', 40.7505, -73.9934, '5th Ave & 34th', 'Officer tone becoming aggressive - intervention needed');
+INSERT INTO incidents (officer_id, escalation_type, risk_level, description) VALUES
+((SELECT id FROM officers WHERE badge_number = '218'), 'suspect_aggression', 'high', 'Suspect showing aggressive behavior during traffic stop'),
+((SELECT id FROM officers WHERE badge_number = '456'), 'verbal_escalation', 'medium', 'Verbal confrontation escalating between suspect and officer'),
+((SELECT id FROM officers WHERE badge_number = '789'), 'officer_aggression', 'critical', 'Officer tone becoming aggressive - intervention needed');
 
 -- Insert sample alerts
 INSERT INTO alerts (officer_id, incident_id, alert_type, message) VALUES
